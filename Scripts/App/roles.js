@@ -109,7 +109,7 @@ function initRoles() {
 		// Fires when an error is returned from the server
 		error: function (e) {
 			if (e.xhr.status != 200) {
-				window.alert("Error: " + e.xhr.statusText);
+				//window.alert("Error: " + e.xhr.statusText);
 			}
 		}
 
@@ -160,7 +160,7 @@ function initRoles() {
 		// Fires when an error is returned from the server
 		error: function (e) {
 			if (e.xhr.status != 200) {
-				window.alert("Error: " + e.xhr.statusText);
+				//window.alert("Error: " + e.xhr.statusText);
 			};
 		}
 
@@ -210,7 +210,7 @@ function initRoles() {
 		// Fires when an error is returned from the server
 		error: function (e) {
 			if (e.xhr.status != 200) {
-				window.alert("Error: " + e.xhr.statusText);
+				//window.alert("Error: " + e.xhr.statusText);
 			}
 		}
 
