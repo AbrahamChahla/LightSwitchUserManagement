@@ -510,19 +510,19 @@ namespace LightSwitchApplication.Controllers
 						var lsUser = ServerApplicationContext.Current.DataWorkspace.SecurityData.UserRegistrations_Single(jsonData.UserName);
 
 						// Was a password sent across?
-						if (jsonData.Password != "")
+						if (!string.IsNullOrEmpty(jsonData.Password))
 						{
 							// Check the password for validity
 							if (jsonData.Password.ToLower().Contains(jsonData.UserName.ToLower()) ||
 							    !ServerApplicationContext.Current.DataWorkspace.SecurityData.IsValidPassword(jsonData.Password))
 								throw new Exception("Not a valid password");
+
+							// Change the password
+							lsUser.Password = jsonData.Password;
 						}
 
 						// Update the profile property and save
 						lsUser.FullName = jsonData.FullName;
-
-						// Change the password
-						lsUser.Password = jsonData.Password;
 
 						// Save the data
 						ServerApplicationContext.Current.DataWorkspace.SecurityData.SaveChanges();
