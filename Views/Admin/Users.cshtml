@@ -1,0 +1,113 @@
+@{
+	ViewBag.Title = "LightSwitch Admin - Users";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Scripts
+{
+	<script src="@Url.Content("~/Scripts/app/users.js")"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			initUsers();
+		});
+	</script>
+}
+
+	<!-- ========================================================== -->
+	<!-- Make things simple, all screens embedded					-->
+	<!-- ToDo would be to use templates and swap in/out as needed	-->
+	<!-- ========================================================== -->
+
+	<!-- ========================================================== -->
+	<!-- Begining of the user management screen						-->
+	<!-- ========================================================== -->
+
+	<div id="usersScreen">
+	<div id="usersLeftSide" class="span4">
+
+		<div id="usersGrid" data-role="grid"
+				data-bind="source: users, events: {dataBinding: usersGridDataBinding, edit: usersGridEdit, change: usersGridChange}"
+				data-editable="popup"
+				data-scrollable="true"
+				data-selectable="single"
+				data-navigatable="true"
+				data-sortable="true"
+				data-resizeable="true"
+				data-updatable="true"
+				data-pageable="{refresh: true}"
+				data-toolbar="[{name: 'create', text: 'Create new user' }]"
+				data-columns="[
+						{ field: 'UserName', title: 'User Name', width: '210px' },
+						{ field: 'FullName', title: 'Full Name', hidden: 'true' },
+						{ field: 'Email', title: 'Email', hidden: 'true' },
+						{ field: 'Password', title: 'Password', hidden: 'true' },
+						{ field: 'IsLockedOut', title: 'Locked', hidden: 'true' },
+
+						{ command: [{ name: 'edit', text: { edit: '', update: 'Save' } }, { name: 'destroy', text: '' }] }
+					]">
+		</div>
+	</div>
+
+	<div id="usersRightSide" class="span8">
+		<div id="usersTabStrip" data-role="tabstrip" data-bind="visible: usersTabStripIsVisible" style="border: none;">
+			<ul style="list-style-type:none;">
+				<li class="k-state-active">Status</li>
+				<li>Profile</li>
+				<li>Assigned Roles</li>
+			</ul>
+
+			<div id="statusTab">
+				<div style="margin-top:10px; margin-bottom: 10px;">
+					<label for="UserName">User Name</label>
+					<input class="k-textbox" name="UserName" data-bind="value: selectedUserData.UserName" style="margin-bottom: 10px; width: 250px;" readonly />
+
+					<label for="IsLockedOut">Account is Locked</label>
+					<input class="k-textbox" name="IsLockedOut" data-bind="value: selectedUserData.IsLockedOut" style="margin-bottom: 10px; width: 250px;" readonly />
+
+					<label for="CreationDate">Created</label>
+					<input class="k-textbox" name="CreationDate" data-bind="value: formatUserDataToDate('CreationDate')" style="margin-bottom: 10px; width: 250px;" readonly />
+
+					<label for="LastLoginDate">Last Login</label>
+					<input class="k-textbox" name="LastLoginDate" data-bind="value: formatUserDataToDate('LastLoginDate')" style="margin-bottom: 10px; width: 250px;" readonly />
+
+					<label for="LastPasswordChangeDate">Password Changed</label>
+					<input class="k-textbox" name="LastPasswordChangeDate" data-bind="value: formatUserDataToDate('LastPasswordChangeDate')" style="margin-bottom: 10px; width: 250px;" readonly />
+				</div>
+			</div>
+
+			<div id="profileTab">
+				<div style="margin-top:10px; margin-bottom: 10px;">
+					<label for="FullName">Full Name</label>
+					<input class="k-textbox" name="FullName" data-bind="value: selectedUserData.FullName" style="margin-bottom: 10px; width: 250px;" />
+
+					<label for="Email">Email</label>
+					<input class="k-textbox" name="Email" data-bind="value: selectedUserData.Email" style="margin-bottom: 10px; width: 250px;" />
+				</div>
+			</div>
+
+			<div id="assigedRolesTab">
+				<div style="margin-top:10px; margin-bottom: 10px;">
+					<div id="userAssigedRolesGrid" data-role="grid"
+							data-bind="source: userRoles, events: {edit: userAssignedRolesGridEdit}"
+							data-editable="popup"
+							data-scrollable="true"
+							data-selectable="single"
+							data-navigatable="true"
+							data-sortable="true"
+							data-resizeable="true"
+							data-updatable="true"
+							data-pageable="{refresh: true}"
+							data-toolbar="[{name: 'create', text: 'Add role to user' }]"
+							data-columns="[
+								{ field: 'RoleName', title: 'RoleName', width: '210px', editor: assignRoleToUserEditor },
+								{ command: [{ name: 'destroy', text: '' }] },
+								{ command: [{ name: 'edit', text: { edit: '', update: 'Save' } }], hidden: true }
+								]">
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+

@@ -1,0 +1,103 @@
+@{
+	ViewBag.Title = "LightSwitch Admin - Roles";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Scripts
+{
+	<script src="@Url.Content("~/Scripts/app/roles.js")"></script>
+	<script type="text/javascript">
+		$(document).ready(function () {
+			initRoles();
+		});
+	</script>
+}
+
+<!-- ========================================================== -->
+<!-- Make things simple, all screens embedded					-->
+<!-- ToDo would be to use templates and swap in/out as needed	-->
+<!-- ========================================================== -->
+
+<!-- ========================================================== -->
+<!-- Here is the screen for role management 					-->
+<!-- ========================================================== -->
+
+<div id="rolesScreen">
+	<div id="rolesLeftSide" class="span4">
+		<div id="rolesGrid" data-role="grid"
+			 data-bind="source: roles, events: {dataBinding: rolesGridDataBinding, edit: rolesGridEdit, change: rolesGridChange }"
+			 data-editable="popup"
+			 data-scrollable="true"
+			 data-selectable="single"
+			 data-navigatable="true"
+			 data-sortable="true"
+			 data-resizeable="true"
+			 data-updatable="true"
+			 data-pageable="{refresh: true}"
+			 data-toolbar="[{name: 'create', text: 'Create new role' }]"
+			 data-columns="[
+							{ field: 'RoleName', title: 'Role Name', width: '210px' },
+							{ command: [{ name: 'destroy', text: '' }] },
+							{ command: [{ name: 'edit', text: { edit: '', update: 'Save' } }], hidden: true }
+						 ]">
+		</div>
+	</div>
+
+	<div id="rolesRightSide" class="span8">
+		<div id="rolesTabStrip" data-role="tabstrip" data-bind="visible: rolesTabStripIsVisible " style="border: none;">
+			<ul style="list-style-type:none;">
+				<li class="k-state-active">Role Permissions</li>
+				<li>Users in Role</li>
+			</ul>
+			<div>
+				<div style="margin-top:10px; margin-bottom: 10px;">
+					<div id="rolePermissionsGrid" data-role="grid"
+						 data-bind="source: rolePermissions, events: {edit: rolePermissionsGridEdit}"
+						 data-editable="popup"
+						 data-scrollable="true"
+						 data-selectable="single"
+						 data-navigatable="true"
+						 data-sortable="true"
+						 data-resizeable="true"
+						 data-updatable="true"
+						 data-pageable="{refresh: true, messages: {empty: 'No items'}}"
+						 data-toolbar="[{name: 'create', text: 'Add permission to role' }]"
+						 data-columns="[
+										{ field: 'PermissionId', title: 'Permission',
+											editor: assignPermissionToRoleEditor,
+											template: '#= getPermissionName(PermissionId) #'},
+										{ command: [{ name: 'destroy', text: '' }] },
+										{ command: [{ name: 'edit', text: { edit: '', update: 'Save' } }], hidden: true }
+									 ]">
+					</div>
+				</div>
+			</div>
+			<div>
+				<div style="margin-top:10px; margin-bottom: 10px;">
+					<div id="usersInRoleGrid" data-role="grid"
+						 data-bind="source: usersInRole, events: {edit: usersInRoleGridEdit}"
+						 data-editable="popup"
+						 data-scrollable="true"
+						 data-selectable="single"
+						 data-navigatable="true"
+						 data-sortable="true"
+						 data-resizeable="true"
+						 data-updatable="true"
+						 data-pageable="{refresh: true}"
+						 data-toolbar="[{name: 'create', text: 'Add user to role' }]"
+						 data-columns="[
+										{ field: 'UserName', title: 'User Name',
+											editor: assignUserToRoleEditor},
+										{ command: [{ name: 'destroy', text: '' }] },
+										{ command: [{ name: 'edit', text: { edit: '', update: 'Save' } }], hidden: true }
+									 ]">
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- ========================================================== -->
+<!-- End of screen content										-->
+<!-- ========================================================== -->
