@@ -14,6 +14,7 @@
 //					We also rely on try/catch to simplify logic
 //					Small modifications will allow you to get to all the Membership data
 //					Converts easily to server side controller
+//					Note also that LightSwitch deals only with UserNames in LowerCase
 //
 // Refactor:		GetUsers, GetUsersInRole to allow pagination, for now, leaving it up to the client
 //
@@ -50,12 +51,12 @@ namespace LightSwitchApplication.Controllers
 		// =======================================================================================================
 		// Initialize our Controller if necessary
 		// =======================================================================================================
-//		public AccountController()
-//		{
-//
-//		}
+		//		public AccountController()
+		//		{
+		//
+		//		}
 
-		
+
 		// =======================================================================================================
 		// GetUsers - Get list of all registered users
 		// Verb: Get
@@ -77,27 +78,27 @@ namespace LightSwitchApplication.Controllers
 					// Go get the LightSwitch profile data for all users
 					var lsUsers = ServerApplicationContext.Current.DataWorkspace.SecurityData
 						.UserRegistrations
-						.Select(u => new { u.UserName, u.FullName})
+						.Select(u => new { u.UserName, u.FullName })
 						.Execute();
 
 					// Get all our other data for all users
 					var membershipUsers = Membership.GetAllUsers().Cast<MembershipUser>();
 
-					// Now lets join the two sets
+					// Now lets join the two sets, note that LightSwitch deals only with LowerCase UserNames
 					var result = from member in membershipUsers
-							 from lsUser in lsUsers
-							 where member.UserName == lsUser.UserName
-							 select new ExpandedUserDTO
-							 {
-								 UserName = member.UserName,
-								 FullName = lsUser.FullName,
-								 Email = member.Email,
-								 IsOnline = member.IsOnline,
-								 IsLockedOut = member.IsLockedOut,
-								 LastLoginDate = member.LastLoginDate,
-								 LastPasswordChangeDate = member.LastPasswordChangedDate,
-								 CreationDate = member.CreationDate
-							 };
+								 from lsUser in lsUsers
+								 where String.Equals(member.UserName, lsUser.UserName, StringComparison.CurrentCultureIgnoreCase)
+								 select new ExpandedUserDTO
+								 {
+									 UserName = member.UserName,
+									 FullName = lsUser.FullName,
+									 Email = member.Email,
+									 IsOnline = member.IsOnline,
+									 IsLockedOut = member.IsLockedOut,
+									 LastLoginDate = member.LastLoginDate,
+									 LastPasswordChangeDate = member.LastPasswordChangedDate,
+									 CreationDate = member.CreationDate
+								 };
 
 					return result;
 				}
@@ -130,10 +131,10 @@ namespace LightSwitchApplication.Controllers
 
 				using (ServerApplicationContext.Current)
 				{
-					// Go get our LightSwitch user data
+					// Go get our LightSwitch user data, LightSwitch deals only with LowerCase usernames
 					var result = ServerApplicationContext.Current.DataWorkspace.SecurityData
 						.UserRegistrations
-						.Where(u => u.UserName == id)
+						.Where(u => String.Equals(u.UserName, id, StringComparison.CurrentCultureIgnoreCase))
 						.Select(u => new ExpandedUserDTO
 						{
 							UserName = u.UserName,
@@ -177,7 +178,10 @@ namespace LightSwitchApplication.Controllers
 		public ExpandedUserDTO GetExpandedUser(string id)
 		{
 			try
-			{
+			{	
+				// LightSwitch calls deals with LowerCase UserNames
+				id = id.ToLower();
+
 				// Make sure we have a ServerApplicationContext, if unable to, throw an exception
 				if (ServerApplicationContext.Current == null) ServerApplicationContext.CreateContext();
 				if (ServerApplicationContext.Current == null)
@@ -187,10 +191,10 @@ namespace LightSwitchApplication.Controllers
 				{
 					var dbContext = ServerApplicationContext.Current.DataWorkspace;
 
-					// Get Our user data from LightSwitch
+					// Get Our user data from LightSwitch, note LightSwitch only deals with LowerCase usernames
 					var result = dbContext.SecurityData
 						.UserRegistrations
-						.Where(u => u.UserName == id)
+						.Where(u => String.Equals(u.UserName, id, StringComparison.CurrentCultureIgnoreCase))
 						.Select(u => new ExpandedUserDTO
 						{
 							UserName = u.UserName,
@@ -211,13 +215,13 @@ namespace LightSwitchApplication.Controllers
 					}
 
 					// Get all the roles assigned to this user
-					var roles = dbContext.SecurityData.RoleAssignments.Where(r => r.UserName == id).Select(r => r.Role).Execute();
+					var roles = dbContext.SecurityData.RoleAssignments.Where(r => r.UserName.ToLower() == id).Select(r => r.Role).Execute();
 
 					// Lets go thru each role object and build a composite for transfer
 					var expandedRoles = roles.Select(r => new UserRolesDTO
 					{
-						RoleName = r.Name, 
-						Permissions = r.RolePermissions.Select(p => new PermissionDTO {Name = p.Permission.Name, Id = p.PermissionId})
+						RoleName = r.Name,
+						Permissions = r.RolePermissions.Select(p => new PermissionDTO { Name = p.Permission.Name, Id = p.PermissionId })
 					}).ToList();
 
 					// Add the expanded roles to the expanded users
@@ -247,7 +251,7 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				// Simple.. go get the roles
-				var result = (from r in Roles.GetAllRoles() 
+				var result = (from r in Roles.GetAllRoles()
 							  select new RoleDTO { RoleName = r });
 				return result;
 			}
@@ -271,6 +275,9 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
+				// Lets keep UserNames lowercase
+				id = id.ToLower();
+
 				// Go get the roles for an individual
 				var result = (from r in Roles.GetRolesForUser(id)
 							  select new UserRoleDTO { RoleName = r, UserName = id });
@@ -319,6 +326,8 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
+				id = id.ToLower();
+
 				// Call our internal helper function that gets the LS permissions
 				var result = GetLightSwitchUserPermissions(id);
 				return result;
@@ -365,7 +374,7 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
-				var result = (from r in Roles.GetUsersInRole(id) 
+				var result = (from r in Roles.GetUsersInRole(id)
 							  select new RoleUserDTO { RoleName = id, UserName = r });
 
 				return result;
@@ -394,6 +403,9 @@ namespace LightSwitchApplication.Controllers
 				// If no UserName then throw an exception so our catch can handle it
 				if (jsonData.UserName == "") throw new Exception("No UserName");
 
+				// Keep our UserName as LowerCase
+				jsonData.UserName = jsonData.UserName.ToLower();
+
 				// If no Password then throw an exception so our catch can handle it
 				if (jsonData.Password == "") throw new Exception("No Password");
 
@@ -405,14 +417,14 @@ namespace LightSwitchApplication.Controllers
 				using (ServerApplicationContext.Current)
 				{
 					// Check the password for validity
-					if(jsonData.Password.ToLower().Contains(jsonData.UserName.ToLower()) ||
-						!ServerApplicationContext.Current.DataWorkspace.SecurityData.IsValidPassword(jsonData.Password)) 
+					if (jsonData.Password.ToLower().Contains(jsonData.UserName) ||
+						!ServerApplicationContext.Current.DataWorkspace.SecurityData.IsValidPassword(jsonData.Password))
 						throw new Exception("Not a valid password");
-					
+
 					// First order of business is to create our LightSwitch user
 					var newUser = ServerApplicationContext.Current.DataWorkspace.SecurityData.UserRegistrations.AddNew();
 					newUser.FullName = jsonData.FullName;
-					newUser.UserName = jsonData.UserName.ToLower();
+					newUser.UserName = jsonData.UserName;
 					newUser.Password = jsonData.Password;
 
 					ServerApplicationContext.Current.DataWorkspace.SecurityData.SaveChanges();
@@ -423,13 +435,13 @@ namespace LightSwitchApplication.Controllers
 				var user = Membership.GetUser(jsonData.UserName);
 				if (user != null)
 				{
-					user.Email = jsonData.Email;
+					user.Email = jsonData.Email.ToLower();
 					Membership.UpdateUser(user);
 
 					// So we're good to go... stuff our return DTO for validation on client side
 					result.UserName = user.UserName;
 					result.FullName = jsonData.FullName;
-					result.Email = user.Email;
+					result.Email = user.Email.ToLower();
 					result.IsLockedOut = user.IsLockedOut;
 				}
 
@@ -480,6 +492,8 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				var result = new UserDTO();
+				jsonData.UserName = jsonData.UserName.ToLower();
+				jsonData.Email = jsonData.Email.ToLower();
 
 				// Get our user
 				var user = Membership.GetUser(jsonData.UserName);
@@ -491,7 +505,7 @@ namespace LightSwitchApplication.Controllers
 				if (user.IsLockedOut && !jsonData.IsLockedOut)
 					user.UnlockUser();
 
-				user.Email = jsonData.Email.ToLower();
+				user.Email = jsonData.Email;
 
 				// Update ASP.NET Membership
 				Membership.UpdateUser(user);
@@ -513,8 +527,8 @@ namespace LightSwitchApplication.Controllers
 						if (!string.IsNullOrEmpty(jsonData.Password))
 						{
 							// Check the password for validity
-							if (jsonData.Password.ToLower().Contains(jsonData.UserName.ToLower()) ||
-							    !ServerApplicationContext.Current.DataWorkspace.SecurityData.IsValidPassword(jsonData.Password))
+							if (jsonData.Password.ToLower().Contains(jsonData.UserName) ||
+								!ServerApplicationContext.Current.DataWorkspace.SecurityData.IsValidPassword(jsonData.Password))
 								throw new Exception("Not a valid password");
 
 							// Change the password
@@ -606,7 +620,7 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
-				Roles.AddUserToRole(jsonData.UserName, jsonData.RoleName);
+				Roles.AddUserToRole(jsonData.UserName.ToLower(), jsonData.RoleName);
 				return jsonData;
 			}
 			catch (Exception e)
@@ -628,7 +642,7 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
-				Roles.RemoveUserFromRole(jsonData.UserName, jsonData.RoleName);
+				Roles.RemoveUserFromRole(jsonData.UserName.ToLower(), jsonData.RoleName);
 			}
 			catch (Exception e)
 			{
@@ -687,6 +701,8 @@ namespace LightSwitchApplication.Controllers
 		{
 			try
 			{
+				jsonData.UserName = jsonData.UserName.ToLower();
+
 				// Make sure we have a ServerApplicationContext, if unable to, throw an exception
 				if (ServerApplicationContext.Current == null) ServerApplicationContext.CreateContext();
 				if (ServerApplicationContext.Current == null)
@@ -732,7 +748,7 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				// Go get our user
-				var user = Membership.GetUser(jsonData.UserName);
+				var user = Membership.GetUser(jsonData.UserName.ToLower());
 
 				// If we found, attempt to change the password, if it fails send an error back
 				if (user != null && !user.ChangePassword(jsonData.OldPassword, jsonData.NewPassword))
@@ -766,7 +782,7 @@ namespace LightSwitchApplication.Controllers
 				var authService = new AuthenticationService();
 
 				// Log our user in
-				var user = authService.Login(jsonData.UserName, jsonData.Password, jsonData.Persistent, null);
+				var user = authService.Login(jsonData.UserName.ToLower(), jsonData.Password, jsonData.Persistent, null);
 
 				// Successful login?  If so, return the user
 				if (user != null) return user;
@@ -864,7 +880,7 @@ namespace LightSwitchApplication.Controllers
 		public bool UnlockUser(string id)
 		{
 			// Go get our user
-			var user = Membership.GetUser(id);
+			var user = Membership.GetUser(id.ToLower());
 
 			// Simple... unlock the account
 			return user != null && user.UnlockUser();
@@ -891,15 +907,15 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				if (ServerApplicationContext.Current == null) ServerApplicationContext.CreateContext();
-				if (ServerApplicationContext.Current == null) 
+				if (ServerApplicationContext.Current == null)
 					throw new Exception("Could not create a ServerApplicationContext... SAC7");
 
 				using (ServerApplicationContext.Current)
 				{
 					var dbContext = ServerApplicationContext.Current.DataWorkspace;
 
-					var resultList = (from Permission p in dbContext.SecurityData.Permissions 
-									  select new PermissionDTO {Id = p.Id, Name = p.Name}).ToList();
+					var resultList = (from Permission p in dbContext.SecurityData.Permissions
+									  select new PermissionDTO { Id = p.Id, Name = p.Name }).ToList();
 
 					return resultList;
 				}
@@ -922,7 +938,7 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				if (ServerApplicationContext.Current == null) ServerApplicationContext.CreateContext();
-				if (ServerApplicationContext.Current == null) 
+				if (ServerApplicationContext.Current == null)
 					throw new Exception("Could not create a ServerApplicationContext... SAC8");
 
 				using (ServerApplicationContext.Current)
@@ -944,7 +960,7 @@ namespace LightSwitchApplication.Controllers
 					// Loop over our Assignments 
 					foreach (var r in roleAssignments)
 					{
-						permissionList.AddRange(r.Select(p => new PermissionDTO {Id = p.Permission.Id, Name = p.Permission.Name}));
+						permissionList.AddRange(r.Select(p => new PermissionDTO { Id = p.Permission.Id, Name = p.Permission.Name }));
 					}
 
 					return permissionList;
@@ -967,7 +983,7 @@ namespace LightSwitchApplication.Controllers
 			try
 			{
 				if (ServerApplicationContext.Current == null) ServerApplicationContext.CreateContext();
-				if (ServerApplicationContext.Current == null) 
+				if (ServerApplicationContext.Current == null)
 					throw new Exception("Could not create a ServerApplicationContext... SAC9");
 
 				using (ServerApplicationContext.Current)
@@ -976,10 +992,10 @@ namespace LightSwitchApplication.Controllers
 
 					var result = dbContext.SecurityData.RolePermissions
 						.Where(r => r.RoleName == roleName)
-						.Select(rp => new RolePermissionDTO {RoleName = rp.RoleName, PermissionId = rp.PermissionId})
+						.Select(rp => new RolePermissionDTO { RoleName = rp.RoleName, PermissionId = rp.PermissionId })
 						.Execute();
 
-		
+
 					return result;
 				}
 			}
