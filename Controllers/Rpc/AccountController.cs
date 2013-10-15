@@ -173,9 +173,10 @@ namespace LightSwitchApplication.Controllers
 		// Data: id (UserName)
 		// Returns: Json representation of an individual user, Expanded version
 		// Comment: Might be a better way of getting the roles/permissions
+		//			Using Newtonsoft for serialization due to complex object
 		// =======================================================================================================
 		[HttpGet]
-		public ExpandedUserDTO GetExpandedUser(string id)
+		public string GetExpandedUser(string id)
 		{
 			try
 			{	
@@ -227,7 +228,7 @@ namespace LightSwitchApplication.Controllers
 					// Add the expanded roles to the expanded users
 					result.Roles = expandedRoles;
 
-					return result;
+					return Newtonsoft.Json.JsonConvert.SerializeObject(result);
 				}
 
 			}
